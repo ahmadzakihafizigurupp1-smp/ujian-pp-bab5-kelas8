@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT - Pendidikan Pancasila Kelas VIII</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ================= CONFIGURATION =================
+        const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyxUH1tvGObOpbAFabAc_LVuZEfYetcM8NGr_2XD-uI-WfKKN786VL3mrF1Q3YlAO53zA/exec";
+        const SUBJECT = "PENDIDIKAN PANCASILA";
+        const EXAM_TYPE = "PENILAIAN BAB 5";
+        const GRADE_LEVEL = "VIII";
+        const DURATION_MINUTES = 90;
+        const STORAGE_KEY = `cbt_${SUBJECT.replace(/\s+/g, '_')}_${GRADE_LEVEL}`;
+
+        // ================= DATA SOAL (EKSTRAKSI PDF) =================
+        const rawQuestionsData = [
+            // Bagian A (Pilihan Ganda Biasa)
+            { id: 1, type: 'mc', text: "Wawasan Nusantara adalah cara pandang bangsa Indonesia terhadap...", options: [{t: "Negara tetangganya", c: false}, {t: "Kekuatan militernya", c: false}, {t: "Diri dan lingkungannya", c: true}, {t: "Kekayaan alamnya saja", c: false}] },
+            { id: 2, type: 'mc', text: "Secara etimologis, kata 'wawasan' berasal dari bahasa Jawa 'wawas' yang berarti...", options: [{t: "Pandangan atau tinjauan", c: true}, {t: "Persatuan", c: false}, {t: "Kekuatan", c: false}, {t: "Kebangsaan", c: false}] },
+            { id: 3, type: 'mc', text: "Landasan idiil Wawasan Nusantara adalah...", options: [{t: "UUD 1945", c: false}, {t: "Bhinneka Tunggal Ika", c: false}, {t: "Pancasila", c: true}, {t: "Tap MPR", c: false}] },
+            { id: 4, type: 'mc', text: "Landasan konstitusional Wawasan Nusantara adalah...", options: [{t: "UUD 1945", c: true}, {t: "Dekrit Presiden", c: false}, {t: "Peraturan Pemerintah", c: false}, {t: "Pancasila", c: false}] },
+            { id: 5, type: 'mc', text: "Salah satu unsur dasar Wawasan Nusantara adalah wadah (contour), yang meliputi...", options: [{t: "Kebijakan politik", c: false}, {t: "Sumber daya manusia", c: false}, {t: "Batas ruang lingkup wilayah NKRI", c: true}, {t: "Sikap mental warga negara", c: false}] },
+            { id: 6, type: 'mc', text: "Tujuan Wawasan Nusantara ke luar adalah ikut serta mewujudkan...", options: [{t: "Ekspansi wilayah", c: false}, {t: "Ketertiban dan perdamaian dunia", c: true}, {t: "Kesejahteraan pejabat", c: false}, {t: "Kekuatan ekonomi tunggal", c: false}] },
+            { id: 7, type: 'mc', text: "Di dalam konsep Wawasan Nusantara, wilayah Indonesia darat, laut, dan udara merupakan...", options: [{t: "Satu kesatuan yang utuh", c: true}, {t: "Kekuasaan yang berbeda", c: false}, {t: "Terpisah-pisah oleh laut", c: false}, {t: "Milik asing bebas", c: false}] },
+            { id: 8, type: 'mc', text: "Mencintai produk dalam negeri merupakan wujud dukungan Wawasan Nusantara di bidang...", options: [{t: "Ekonomi", c: true}, {t: "Sosial Budaya", c: false}, {t: "Pertahanan", c: false}, {t: "Politik", c: false}] },
+            { id: 9, type: 'mc', text: "Sikap gotong royong di lingkungan masyarakat merupakan contoh penerapan Wawasan Nusantara dalam bidang...", options: [{t: "Politik", c: false}, {t: "Sosial Budaya", c: true}, {t: "Pertahanan", c: false}, {t: "Ekonomi", c: false}] },
+            { id: 10, type: 'mc', text: "Wawasan Nusantara berfungsi sebagai pedoman dalam...", options: [{t: "Menguasai negara lain", c: false}, {t: "Penyelenggaraan kehidupan berbangsa dan bernegara", c: true}, {t: "Menyusun strategi perang ofensif", c: false}, {t: "Mengumpulkan kekayaan individu", c: false}] },
+            { id: 11, type: 'mc', text: "Tantangan Wawasan Nusantara di era digital saat ini antara lain adalah...", options: [{t: "Kemudahan transportasi", c: false}, {t: "Banyaknya pembangunan fisik", c: false}, {t: "Meningkatnya rasa nasionalisme", c: false}, {t: "Penyebaran hoaks dan ujaran kebencian", c: true}] },
+            { id: 12, type: 'mc', text: "Menghormati teman yang berbeda suku dan agama adalah cerminan dari...", options: [{t: "Etnosentrisme", c: false}, {t: "Wawasan Nusantara", c: true}, {t: "Chauvinisme", c: false}, {t: "Diskriminasi", c: false}] },
+            { id: 13, type: 'mc', text: "Berikut ini yang merupakan asas Wawasan Nusantara, kecuali...", options: [{t: "Ketidakadilan", c: true}, {t: "Kerja sama", c: false}, {t: "Solidaritas", c: false}, {t: "Kejujuran", c: false}] },
+            { id: 14, type: 'mc', text: "Wawasan Nusantara mengamanatkan bahwa keanekaragaman budaya harus disikapi sebagai...", options: [{t: "Kekayaan bangsa yang menyatukan", c: true}, {t: "Hambatan pembangunan", c: false}, {t: "Faktor penyebab konflik", c: false}, {t: "Alasan untuk berpisah", c: false}] },
+            { id: 15, type: 'mc', text: "Dalam bidang politik, Wawasan Nusantara bertujuan menciptakan...", options: [{t: "Persaingan antar partai yang tidak sehat", c: false}, {t: "Pemerintahan yang kuat, aspiratif, dan terpercaya", c: true}, {t: "Pemisahan kekuasaan pusat dan daerah secara total", c: false}, {t: "Kekuasaan mutlak satu golongan", c: false}] },
+            { id: 16, type: 'mc', text: "Implementasi Wawasan Nusantara dalam kehidupan pertahanan keamanan akan menumbuhkan...", options: [{t: "Keinginan menguasai negara tetangga", c: false}, {t: "Kesadaran cinta tanah air", c: true}, {t: "Sikap acuh tak acuh", c: false}, {t: "Ketergantungan pada militer asing", c: false}] },
+            { id: 17, type: 'mc', text: "Keikutsertaan warga negara dalam Pemilu dengan jujur dan adil adalah contoh penerapan Wawasan Nusantara di bidang...", options: [{t: "Politik", c: true}, {t: "Budaya", c: false}, {t: "Sosial", c: false}, {t: "Ekonomi", c: false}] },
+            { id: 18, type: 'mc', text: "Apabila terjadi konflik antarwarga, sikap yang sejalan dengan Wawasan Nusantara adalah...", options: [{t: "Main hakim sendiri", c: false}, {t: "Mengedepankan musyawarah mufakat", c: true}, {t: "Membiarkan karena bukan urusan kita", c: false}, {t: "Membela pihak yang satu suku saja", c: false}] },
+            { id: 19, type: 'mc', text: "Munculnya sikap individualisme di kota besar merupakan salah satu tantangan Wawasan Nusantara dari aspek...", options: [{t: "Politik", c: false}, {t: "Pertahanan keamanan", c: false}, {t: "Ideologi", c: false}, {t: "Sosial budaya", c: true}] },
+            { id: 20, type: 'mc', text: "Salah satu kedudukan Wawasan Nusantara adalah sebagai visi bangsa, yang artinya...", options: [{t: "Menjadi lambang negara", c: false}, {t: "Menjadi sejarah masa lalu", c: false}, {t: "Menjadi cita-cita dan arah pandang masa depan", c: true}, {t: "Menjadi aturan hukum tertinggi", c: false}] },
+            { id: 21, type: 'mc', text: "Dalam konteks Wawasan Nusantara, pemanfaatan kekayaan alam di Indonesia harus didasarkan pada asas...", options: [{t: "Hanya untuk kepentingan asing", c: false}, {t: "Hanya dikelola oleh pemerintah pusat", c: false}, {t: "Maksimal, lestari, dan berdaya saing", c: true}, {t: "Eksploitasi tanpa batas", c: false}] },
+            { id: 22, type: 'mc', text: "Globalisasi membawa dampak positif dan negatif. Sikap yang sesuai dengan Wawasan Nusantara adalah...", options: [{t: "Menerima tanpa syarat budaya asing", c: false}, {t: "Mengisolasi diri dari dunia internasional", c: false}, {t: "Menyaring budaya asing dengan nilai Pancasila", c: true}, {t: "Menolak semua hal dari luar", c: false}] },
+            { id: 23, type: 'mc', text: "Fungsi Wawasan Nusantara sebagai konsep Ketahanan Nasional berarti...", options: [{t: "Menjadi syarat berdirinya negara", c: false}, {t: "Menjadi dasar hukum pengadilan", c: false}, {t: "Menjadi pedoman dalam pembangunan pertahanan dan kewilayahan", c: true}, {t: "Menjadi pedoman pemilihan kepala daerah", c: false}] },
+            { id: 24, type: 'mc', text: "Menjaga keutuhan wilayah NKRI dari ancaman luar merupakan tanggung jawab...", options: [{t: "Polisi saja", c: false}, {t: "Seluruh warga negara Indonesia", c: true}, {t: "Presiden dan menteri", c: false}, {t: "Tentara Nasional Indonesia (TNI) saja", c: false}] },
+            { id: 25, type: 'mc', text: "Pernyataan yang paling tepat menggambarkan hubungan Pancasila dan Wawasan Nusantara adalah...", options: [{t: "Keduanya tidak memiliki keterkaitan secara historis", c: false}, {t: "Pancasila mengacu pada Wawasan Nusantara dalam perumusannya", c: false}, {t: "Pancasila adalah roh dan Wawasan Nusantara adalah wujud implementasinya dalam memandang wilayah", c: true}, {t: "Wawasan Nusantara lebih tinggi kedudukannya daripada Pancasila", c: false}] },
+            { id: 26, type: 'mc', text: "Tantangan Wawasan Nusantara berupa 'pemberdayaan masyarakat' mengandung makna bahwa pemerintah harus...", options: [{t: "Memberikan peran aktif kepada masyarakat dalam pembangunan daerahnya", c: true}, {t: "Membiarkan masyarakat membangun tanpa arah", c: false}, {t: "Menghapus program bantuan sosial", c: false}, {t: "Mengendalikan masyarakat secara otoriter", c: false}] },
+            { id: 27, type: 'mc', text: "Konsep 'Archipelago' (Negara Kepulauan) yang diakui dunia melalui UNCLOS 1982 sangat penting bagi Wawasan Nusantara karena...", options: [{t: "Memisahkan pulau-pulau agar mudah dikelola daerah masing-masing", c: false}, {t: "Menyatukan laut di antara pulau-pulau sebagai penghubung, bukan pemisah", c: true}, {t: "Membuat Indonesia bisa menjual lautnya", c: false}, {t: "Membebaskan kapal asing mengambil ikan", c: false}] },
+            { id: 28, type: 'mc', text: "Ancaman nirmiliter yang dapat merusak Wawasan Nusantara di era saat ini, contohnya adalah...", options: [{t: "Perebutan batas wilayah darat secara fisik", c: false}, {t: "Blokade jalur laut secara militer", c: false}, {t: "Perang ideologi dan perang informasi (cyber war)", c: true}, {t: "Serangan agresi militer dari negara tetangga", c: false}] },
+            { id: 29, type: 'mc', text: "Cara mengimplementasikan Wawasan Nusantara dalam kehidupan sekolah untuk mewujudkan integrasi nasional adalah dengan...", options: [{t: "Meniadakan pelajaran muatan lokal", c: false}, {t: "Melarang penggunaan bahasa daerah sama sekali", c: false}, {t: "Hanya berteman dengan yang seagama", c: false}, {t: "Mengadakan pertukaran budaya antarpelajar nusantara", c: true}] },
+            { id: 30, type: 'mc', text: "Keberhasilan pelaksanaan Wawasan Nusantara sangat bergantung pada...", options: [{t: "Kesadaran, pemahaman, dan pengamalan setiap warga negara", c: true}, {t: "Banyaknya jumlah aparat keamanan", c: false}, {t: "Besarnya anggaran pertahanan negara", c: false}, {t: "Dukungan penuh dari negara-negara PBB", c: false}] },
+            
+            // Bagian B (Pilihan Ganda Kompleks - Majemuk)
+            { id: 31, type: 'ms', text: "Manakah dari berikut ini yang merupakan tujuan Wawasan Nusantara? (Pilih dua)", options: [{t: "Menghapus budaya dan tradisi lokal", c: false}, {t: "Ikut mewujudkan ketertiban dunia", c: true}, {t: "Menciptakan perpecahan di daerah perbatasan", c: false}, {t: "Mewujudkan kesatuan bangsa dalam segala aspek", c: true}] },
+            { id: 32, type: 'ms', text: "Sikap yang sesuai dengan asas kerja sama dalam Wawasan Nusantara adalah...", options: [{t: "Mementingkan keuntungan diri sendiri", c: false}, {t: "Bersikap individualis di lingkungan rumah", c: false}, {t: "Gotong royong membangun fasilitas umum", c: true}, {t: "Tolong-menolong antartetangga", c: true}] },
+            { id: 33, type: 'ms', text: "Tantangan ikatan keutuhan NKRI di era sekarang antara lain...", options: [{t: "Pemberontakan bersenjata", c: true}, {t: "Separatisme atau gerakan memisahkan diri", c: true}, {t: "Gotong royong warga", c: false}, {t: "Festival budaya daerah", c: false}] },
+            { id: 34, type: 'ms', text: "Lingkungan yang menjadi tempat pertama dan utama penerapan nilai Wawasan Nusantara pada anak adalah...", options: [{t: "Sekolah melalui pendidikan", c: true}, {t: "Perusahaan tempat bekerja", c: false}, {t: "Keluarga di rumah", c: true}, {t: "Lembaga internasional seperti PBB", c: false}] },
+            { id: 35, type: 'ms', text: "Berikut ini yang merupakan contoh nyata implementasi Wawasan Nusantara di bidang ekonomi adalah...", options: [{t: "Pembangunan infrastruktur yang merata hingga ke pelosok", c: true}, {t: "Korupsi anggaran untuk kepentingan golongan tertentu", c: false}, {t: "Pengelolaan sumber daya alam untuk kemakmuran seluruh rakyat", c: true}, {t: "Monopoli perdagangan bahan pokok oleh satu kelompok", c: false}] },
+            { id: 36, type: 'ms', text: "Aspek-aspek apa saja yang termasuk dalam Trigatra (aspek alamiah) Ketahanan Nasional?", options: [{t: "Keadaan dan Kekayaan Alam", c: true}, {t: "Sistem Ekonomi", c: false}, {t: "Kondisi Geografis", c: true}, {t: "Sistem Ideologi", c: false}] },
+            { id: 37, type: 'ms', text: "Aspek Pancagatra (aspek sosial) dalam Ketahanan Nasional meliputi...", options: [{t: "Kekayaan Alam", c: false}, {t: "Sistem Ideologi Pancasila", c: true}, {t: "Sistem Politik dan Pemerintahan", c: true}, {t: "Letak Geografis Negara", c: false}] },
+            { id: 38, type: 'ms', text: "Faktor-faktor yang dapat melemahkan implementasi Wawasan Nusantara dari dalam negeri...", options: [{t: "Pertukaran pelajar antarpulau", c: false}, {t: "Sikap etnosentrisme yang berlebihan", c: true}, {t: "Kesenjangan ekonomi antar daerah yang mencolok", c: true}, {t: "Pembangunan jembatan antarpulau", c: false}] },
+            { id: 39, type: 'ms', text: "Dampak positif pengakuan Indonesia sebagai negara kepulauan (Archipelagic State) secara internasional adalah...", options: [{t: "Laut diakui sebagai alat pemersatu pulau-pulau", c: true}, {t: "Meningkatnya potensi konflik militer berskala besar", c: false}, {t: "Bertambah luasnya wilayah teritorial laut Indonesia", c: true}, {t: "Menghilangkan kedaulatan di zona ekonomi eksklusif", c: false}] },
+            { id: 40, type: 'ms', text: "Peran aktif siswa dalam merawat keutuhan bangsa sesuai konsep Wawasan Nusantara dapat dilakukan dengan cara...", options: [{t: "Menyaring informasi di media sosial agar tidak menyebarkan hoaks", c: true}, {t: "Hanya belajar ilmu pasti dan menolak ilmu sosial", c: false}, {t: "Turut serta melestarikan kebudayaan daerah asal masing-masing", c: true}, {t: "Menjauhi kegiatan organisasi yang membangun toleransi di sekolah", c: false}] },
+
+            // Bagian C (Tabel Benar/Salah)
+            { id: 41, type: 'tf_table', text: "Tentukan Benar atau Salah pernyataan berikut mengenai Definisi dan Tujuan Wawasan Nusantara!", statements: [ { id: 's1', t: "Wawasan Nusantara menjadi landasan visional kehidupan bangsa Indonesia.", a: 'Benar' }, { id: 's2', t: "Tujuan Wawasan Nusantara hanya untuk melindungi pejabat negara.", a: 'Salah' }, { id: 's3', t: "Wawasan Nusantara berasal dari kata 'wawas' yang artinya pandangan.", a: 'Benar' }, { id: 's4', t: "Konsep ini sengaja diciptakan untuk memecah belah bangsa agar mudah diatur.", a: 'Salah' }, { id: 's5', t: "Wawasan Nusantara memandang Indonesia sebagai satu kesatuan yang utuh.", a: 'Benar' } ] },
+            { id: 42, type: 'tf_table', text: "Tentukan Benar atau Salah pernyataan mengenai contoh penerapan di lingkungan sekitar!", statements: [ { id: 's1', t: "Di sekolah, kita diperbolehkan mendiskriminasi teman yang berbeda suku.", a: 'Salah' }, { id: 's2', t: "Menaati tata tertib sekolah mendukung keutuhan dan ketertiban bersama.", a: 'Benar' }, { id: 's3', t: "Tawuran antarpelajar merupakan bentuk pelestarian kebudayaan lokal.", a: 'Salah' }, { id: 's4', t: "Gotong royong membersihkan kelas adalah cerminan semangat persatuan.", a: 'Benar' }, { id: 's5', t: "Menjaga kerukunan antar anggota keluarga adalah wujud Wawasan Nusantara.", a: 'Benar' } ] },
+            { id: 43, type: 'tf_table', text: "Tentukan Benar atau Salah berkaitan dengan landasan Wawasan Nusantara!", statements: [ { id: 's1', t: "Semboyan Bhinneka Tunggal Ika bukan bagian dari semangat Wawasan Nusantara.", a: 'Salah' }, { id: 's2', t: "UUD NRI Tahun 1945 adalah landasan konstitusional Wawasan Nusantara.", a: 'Benar' }, { id: 's3', t: "Sila ke-3 Pancasila sangat berkaitan erat dengan esensi Wawasan Nusantara.", a: 'Benar' }, { id: 's4', t: "Wawasan Nusantara sama sekali tidak memiliki hubungan dengan Pancasila.", a: 'Salah' }, { id: 's5', t: "Pancasila berkedudukan sebagai landasan idiil Wawasan Nusantara.", a: 'Benar' } ] },
+            { id: 44, type: 'tf_table', text: "Tentukan Benar atau Salah perilaku merawat keutuhan bangsa berikut ini!", statements: [ { id: 's1', t: "Menyebarkan berita bohong (hoaks) di media sosial dapat merusak keutuhan bangsa.", a: 'Benar' }, { id: 's2', t: "Menggunakan produk dalam negeri turut mendukung perekonomian nasional.", a: 'Benar' }, { id: 's3', t: "Mengejek budaya atau tradisi dari daerah lain di Indonesia merupakan hak asasi.", a: 'Salah' }, { id: 's4', t: "Saling menghargai saat umat beragama lain sedang beribadah.", a: 'Benar' }, { id: 's5', t: "Sebaiknya hanya mempelajari bahasa asing dan melupakan bahasa Indonesia sepenuhnya.", a: 'Salah' } ] },
+            { id: 45, type: 'tf_table', text: "Tentukan Benar atau Salah tentang tantangan Wawasan Nusantara di era modern!", statements: [ { id: 's1', t: "Setiap budaya asing yang masuk harus disaring menggunakan nilai-nilai luhur Pancasila.", a: 'Benar' }, { id: 's2', t: "Globalisasi secara mutlak hanya membawa dampak positif bagi Wawasan Nusantara.", a: 'Salah' }, { id: 's3', t: "Ancaman perang di era modern hanya berwujud penggunaan kekuatan senjata fisik (militer).", a: 'Salah' }, { id: 's4', t: "Kemajuan teknologi informasi sering digunakan untuk menyebar propaganda perpecahan.", a: 'Benar' }, { id: 's5', t: "Sikap hedonisme dan konsumerisme dapat melunturkan nilai kepedulian sosial di masyarakat.", a: 'Benar' } ] },
+            { id: 46, type: 'tf_table', text: "Tentukan Benar atau Salah mengenai kedudukan dan fungsi Wawasan Nusantara!", statements: [ { id: 's1', t: "Wawasan Nusantara berfungsi sebagai pedoman dalam penentuan kebijakan nasional.", a: 'Benar' }, { id: 's2', t: "Wawasan Nusantara berkedudukan sebagai visi nasional bangsa Indonesia.", a: 'Benar' }, { id: 's3', t: "Hanya berlaku untuk instruksi pemerintah pusat dan mengabaikan pemerintah daerah.", a: 'Salah' }, { id: 's4', t: "Konsep ini hanyalah angan-angan masa lalu dan bukan landasan pembangunan.", a: 'Salah' }, { id: 's5', t: "Berfungsi sebagai rambu-rambu dalam mewujudkan kesejahteraan dan keamanan.", a: 'Benar' } ] },
+            { id: 47, type: 'tf_table', text: "Tentukan Benar atau Salah mengenai aspek laut dan wilayah kepulauan Indonesia!", statements: [ { id: 's1', t: "Sebelum Deklarasi Djuanda, laut di antara pulau-pulau adalah laut bebas internasional.", a: 'Benar' }, { id: 's2', t: "Deklarasi Djuanda tahun 1957 berhasil merubah konsep batas laut wilayah Indonesia.", a: 'Benar' }, { id: 's3', t: "Konvensi Hukum Laut (UNCLOS) 1982 menolak keras Indonesia sebagai negara kepulauan.", a: 'Salah' }, { id: 's4', t: "Wilayah ruang udara Indonesia bebas dilintasi oleh pesawat tempur negara mana pun tanpa izin.", a: 'Salah' }, { id: 's5', t: "Batas Zona Ekonomi Eksklusif (ZEE) memberikan hak eksploitasi kekayaan laut sejauh 200 mil.", a: 'Benar' } ] },
+            { id: 48, type: 'tf_table', text: "Tentukan Benar atau Salah tentang implementasi ketahanan aspek Trigatra dan Pancagatra!", statements: [ { id: 's1', t: "Sistem Ideologi termasuk dalam ketahanan aspek alamiah bangsa Indonesia.", a: 'Salah' }, { id: 's2', t: "Aspek Trigatra meliputi Geografi, Kependudukan (Demografi), dan Kekayaan Alam.", a: 'Benar' }, { id: 's3', t: "Kependudukan atau Demografi adalah aspek yang statis dan tidak akan pernah berubah dari masa ke masa.", a: 'Salah' }, { id: 's4', t: "Aspek Pancagatra meliputi Ideologi, Politik, Ekonomi, Sosial Budaya, dan Pertahanan Keamanan.", a: 'Benar' }, { id: 's5', t: "Keberhasilan di bidang ekonomi akan secara langsung mendukung ketahanan nasional suatu bangsa.", a: 'Benar' } ] },
+            { id: 49, type: 'tf_table', text: "Tentukan Benar atau Salah berkaitan dengan integrasi nasional dan ancaman disintegrasi!", statements: [ { id: 's1', t: "Sistem otonomi daerah memberikan ruang bagi daerah untuk berkembang namun tetap dalam bingkai NKRI.", a: 'Benar' }, { id: 's2', t: "Pembangunan infrastruktur yang sentralistis (hanya terpusat di satu pulau) justru mendukung Wawasan Nusantara.", a: 'Salah' }, { id: 's3', t: "Integrasi nasional adalah proses menyatukan perbedaan budaya dan kelompok sosial ke dalam kesatuan wilayah.", a: 'Benar' }, { id: 's4', t: "Etnosentrisme merupakan sikap fanatisme sempit yang sangat baik untuk memperkuat integrasi nasional.", a: 'Salah' }, { id: 's5', t: "Ancaman terhadap satu pulau di Indonesia pada hakikatnya adalah ancaman bagi seluruh wilayah Indonesia.", a: 'Benar' } ] },
+            { id: 50, type: 'tf_table', text: "Tentukan Benar atau Salah terkait strategi cerdas dalam mengatasi tantangan Wawasan Nusantara!", statements: [ { id: 's1', t: "Mengisolasi diri dari pergaulan internasional adalah cara paling efektif untuk menjaga kemurnian budaya asli.", a: 'Salah' }, { id: 's2', t: "Pemerataan pembangunan ke daerah tertinggal efektif mencegah rasa ketidakadilan yang memicu separatisme.", a: 'Benar' }, { id: 's3', t: "Pendidikan Pancasila dan Kewarganegaraan di sekolah memegang peran sentral dalam internalisasi Wawasan Nusantara.", a: 'Benar' }, { id: 's4', t: "Penyelesaian seluruh konflik kebangsaan selalu membutuhkan pendekatan militer sebagai solusi tunggal.", a: 'Salah' }, { id: 's5', t: "Peningkatan literasi digital di masyarakat sangat krusial untuk mencegah adu domba berkedok SARA.", a: 'Benar' } ] }
+        ];
+
+        // ================= HELPER FUNCTIONS =================
+        const shuffleArray = (array) => {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        };
+
+        const generateShuffledQuestions = () => {
+            let questions = shuffleArray(rawQuestionsData).map(q => {
+                if (q.type === 'mc' || q.type === 'ms') {
+                    return { ...q, options: shuffleArray(q.options) };
+                }
+                if(q.type === 'tf_table') {
+                    return { ...q, statements: shuffleArray(q.statements) };
+                }
+                return q;
+            });
+            return questions;
+        };
+
+        // ================= CUSTOM MODALS =================
+        const AlertModal = ({ show, title, message, onClose }) => {
+            if (!show) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-2xl">
+                        <h3 className="text-xl font-bold mb-2 text-red-600">{title}</h3>
+                        <p className="text-gray-700 mb-6">{message}</p>
+                        <div className="flex justify-end">
+                            <button onClick={onClose} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium">Mengerti</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ConfirmModal = ({ show, title, message, onConfirm, onCancel }) => {
+            if (!show) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-2xl">
+                        <h3 className="text-xl font-bold mb-2 text-gray-900">{title}</h3>
+                        <p className="text-gray-700 mb-6">{message}</p>
+                        <div className="flex justify-end space-x-3">
+                            <button onClick={onCancel} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded font-medium border border-gray-300">Batal</button>
+                            <button onClick={onConfirm} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium">Kumpulkan</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ================= MAIN COMPONENT =================
+        const App = () => {
+            const [stage, setStage] = React.useState('login'); // login, resume-prompt, exam, finished
+            const [userData, setUserData] = React.useState({ name: '', classStr: '', date: new Date().toISOString().split('T')[0] });
+            const [questions, setQuestions] = React.useState([]);
+            const [answers, setAnswers] = React.useState({});
+            const [currentIndex, setCurrentIndex] = React.useState(0);
+            const [timeLeft, setTimeLeft] = React.useState(DURATION_MINUTES * 60);
+            const [cheatingCount, setCheatingCount] = React.useState(0);
+            const [scoreInfo, setScoreInfo] = React.useState(null);
+
+            // Modal States
+            const [alertState, setAlertState] = React.useState({ show: false, title: '', msg: '' });
+            const [confirmState, setConfirmState] = React.useState(false);
+
+            // Check for saved session
+            React.useEffect(() => {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    setStage('resume-prompt');
+                }
+            }, []);
+
+            // Anti Cheat (Visibility & Fullscreen)
+            React.useEffect(() => {
+                if (stage !== 'exam') return;
+
+                const handleViolation = (reason) => {
+                    setCheatingCount(prev => {
+                        const newCount = prev + 1;
+                        if (newCount === 1) {
+                            setAlertState({ show: true, title: 'Peringatan Pelanggaran!', msg: `Anda terdeteksi ${reason}. Ini adalah peringatan PERTAMA. Pelanggaran kedua akan menghentikan ujian otomatis.` });
+                        } else if (newCount >= 2) {
+                            setAlertState({ show: true, title: 'Ujian Dihentikan', msg: 'Batas pelanggaran tercapai. Ujian Anda otomatis dikumpulkan.' });
+                            submitExam(newCount, "Auto-Submit: Terlalu banyak pelanggaran (Curang)");
+                        }
+                        return newCount;
+                    });
+                };
+
+                const handleVisChange = () => { if (document.hidden) handleViolation("berpindah tab / mengecilkan browser"); };
+                const handleFsChange = () => { if (!document.fullscreenElement) handleViolation("keluar dari mode layar penuh (fullscreen)"); };
+
+                document.addEventListener('visibilitychange', handleVisChange);
+                document.addEventListener('fullscreenchange', handleFsChange);
+
+                return () => {
+                    document.removeEventListener('visibilitychange', handleVisChange);
+                    document.removeEventListener('fullscreenchange', handleFsChange);
+                };
+            }, [stage]);
+
+            // Timer & Auto Save
+            React.useEffect(() => {
+                if (stage === 'exam' && timeLeft > 0) {
+                    const timer = setInterval(() => {
+                        setTimeLeft(prev => {
+                            if (prev <= 1) {
+                                clearInterval(timer);
+                                setAlertState({ show: true, title: 'Waktu Habis', msg: 'Waktu ujian telah habis. Jawaban dikumpulkan otomatis.' });
+                                submitExam(cheatingCount, "Auto-Submit: Waktu Habis");
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                    return () => clearInterval(timer);
+                }
+            }, [stage, timeLeft]);
+
+            React.useEffect(() => {
+                if (stage === 'exam') {
+                    const saveData = { userData, questions, answers, timeLeft, cheatingCount };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+                }
+            }, [answers, timeLeft, cheatingCount, stage]);
+
+            // Handlers
+            const startExam = (isResume) => {
+                if (!isResume) {
+                    if (!userData.name || !userData.classStr) {
+                        setAlertState({ show: true, title: 'Data Belum Lengkap', msg: 'Harap isi Nama dan Kelas terlebih dahulu.' });
+                        return;
+                    }
+                    setQuestions(generateShuffledQuestions());
+                    setAnswers({});
+                    setTimeLeft(DURATION_MINUTES * 60);
+                    setCheatingCount(0);
+                } else {
+                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                    setUserData(saved.userData);
+                    setQuestions(saved.questions);
+                    setAnswers(saved.answers || {});
+                    setTimeLeft(saved.timeLeft);
+                    setCheatingCount(saved.cheatingCount || 0);
+                }
+                
+                setStage('exam');
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen blocked"));
+                }
+            };
+
+            const handleAnswerChange = (qId, type, val, statementId = null) => {
+                setAnswers(prev => {
+                    const newAns = { ...prev };
+                    if (type === 'mc') {
+                        newAns[qId] = val; // val is option text
+                    } else if (type === 'ms') {
+                        const curr = newAns[qId] || [];
+                        if (curr.includes(val)) {
+                            newAns[qId] = curr.filter(item => item !== val);
+                        } else {
+                            newAns[qId] = [...curr, val];
+                        }
+                    } else if (type === 'tf_table') {
+                        if (!newAns[qId]) newAns[qId] = {};
+                        newAns[qId][statementId] = val; // val is "Benar" or "Salah"
+                    }
+                    return newAns;
+                });
+            };
+
+            const calculateScore = () => {
+                let correctCount = 0;
+                let totalItems = 0;
+
+                questions.forEach(q => {
+                    if (q.type === 'mc') {
+                        totalItems++;
+                        const correctOpt = q.options.find(o => o.c).t;
+                        if (answers[q.id] === correctOpt) correctCount++;
+                    } else if (q.type === 'ms') {
+                        totalItems++;
+                        const correctOpts = q.options.filter(o => o.c).map(o => o.t);
+                        const userAns = answers[q.id] || [];
+                        // Correct if lengths match and all correct selected
+                        const isCorrect = userAns.length === correctOpts.length && userAns.every(v => correctOpts.includes(v));
+                        if (isCorrect) correctCount++;
+                    } else if (q.type === 'tf_table') {
+                        q.statements.forEach(stmt => {
+                            totalItems++;
+                            const userAns = (answers[q.id] || {})[stmt.id];
+                            if (userAns === stmt.a) correctCount++;
+                        });
+                    }
+                });
+
+                return Math.round((correctCount / totalItems) * 100);
+            };
+
+            const submitExam = (cheatTotal = cheatingCount, note = "Normal Submit") => {
+                const finalScore = calculateScore();
+                const payload = {
+                    nama: userData.name,
+                    kelas: userData.classStr,
+                    tanggal: userData.date,
+                    skor: finalScore,
+                    pelanggaran: cheatTotal,
+                    keterangan: note,
+                    debug: JSON.stringify(answers)
+                };
+
+                fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error("Fetch error", err));
+
+                localStorage.removeItem(STORAGE_KEY);
+                setScoreInfo(finalScore);
+                setStage('finished');
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(err => {});
+                }
+            };
+
+            const formatTime = (sec) => {
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60);
+                const s = sec % 60;
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            };
+
+            // Prevent Copy Paste Context Menu
+            const preventDefaults = (e) => e.preventDefault();
+
+            // Render Views
+            if (stage === 'login') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+                        <AlertModal show={alertState.show} title={alertState.title} message={alertState.msg} onClose={() => setAlertState({show:false})} />
+                        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+                            <h1 className="text-2xl font-bold text-center text-blue-600 mb-2">Portal Ujian CBT</h1>
+                            <p className="text-center text-gray-500 text-sm mb-6">{SUBJECT} - KELAS {GRADE_LEVEL}</p>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                    <input type="text" className="w-full border border-gray-300 p-2 rounded focus:ring-blue-500 focus:border-blue-500" placeholder="Masukkan Nama" value={userData.name} onChange={(e) => setUserData({...userData, name: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                                    <input type="text" className="w-full border border-gray-300 p-2 rounded focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: VIII-A" value={userData.classStr} onChange={(e) => setUserData({...userData, classStr: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Ujian</label>
+                                    <input type="date" className="w-full border border-gray-300 p-2 rounded focus:ring-blue-500 focus:border-blue-500" value={userData.date} onChange={(e) => setUserData({...userData, date: e.target.value})} />
+                                </div>
+                                <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-3 rounded mt-4">
+                                    <p className="font-semibold mb-1">Peringatan Sistem Anti-Curang:</p>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        <li>Browser akan otomatis masuk ke layar penuh.</li>
+                                        <li>Dilarang keluar dari layar penuh atau pindah tab/aplikasi lain.</li>
+                                        <li>Pelanggaran ke-2 akan menyebabkan ujian terhenti otomatis.</li>
+                                    </ul>
+                                </div>
+                                <button onClick={() => startExam(false)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition mt-6 shadow-md">
+                                    MULAI UJIAN
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (stage === 'resume-prompt') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+                        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+                            <h2 className="text-xl font-bold text-yellow-600 mb-4">Sesi Ujian Tersimpan Ditemukan!</h2>
+                            <p className="text-gray-600 mb-6">Sistem mendeteksi Anda belum menyelesaikan ujian sebelumnya. Apakah Anda ingin melanjutkan?</p>
+                            <div className="space-y-3">
+                                <button onClick={() => startExam(true)} className="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700">Lanjutkan Ujian</button>
+                                <button onClick={() => { localStorage.removeItem(STORAGE_KEY); setStage('login'); }} className="w-full bg-red-100 text-red-600 font-bold py-2 rounded hover:bg-red-200">Mulai Ulang (Hapus Progres)</button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (stage === 'finished') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+                        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+                            <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="check-circle" className="w-10 h-10"></i>
+                            </div>
+                            <h1 className="text-2xl font-bold text-gray-800 mb-2">Ujian Selesai!</h1>
+                            <p className="text-gray-600 mb-6">Terima kasih, data dan jawaban Anda telah berhasil dikirim ke server.</p>
+                            <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left space-y-2 border">
+                                <p><span className="font-semibold text-gray-700">Nama:</span> {userData.name}</p>
+                                <p><span className="font-semibold text-gray-700">Kelas:</span> {userData.classStr}</p>
+                                <p><span className="font-semibold text-gray-700">Skor:</span> <span className="text-blue-600 font-bold text-xl">{scoreInfo}</span></p>
+                            </div>
+                            <button onClick={() => window.location.reload()} className="w-full bg-gray-200 text-gray-800 font-bold py-2 rounded hover:bg-gray-300">Kembali ke Awal</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Exam View
+            const currentQ = questions[currentIndex];
+            const hasAnswered = (qId) => {
+                const q = questions.find(x => x.id === qId);
+                const ans = answers[qId];
+                if (!ans) return false;
+                if (q.type === 'mc') return true;
+                if (q.type === 'ms') return ans.length > 0;
+                if (q.type === 'tf_table') return Object.keys(ans).length === q.statements.length;
+                return false;
+            };
+
+            return (
+                <div className="flex h-screen bg-gray-100 select-none" onCopy={preventDefaults} onContextMenu={preventDefaults} onSelectStart={preventDefaults}>
+                    <AlertModal show={alertState.show} title={alertState.title} message={alertState.msg} onClose={() => {
+                        setAlertState({show:false});
+                        if (stage === 'finished') return; // if it was auto-submit
+                    }} />
+                    <ConfirmModal show={confirmState} title="Konfirmasi Kumpul" message="Apakah Anda yakin ingin menyelesaikan ujian? Anda tidak dapat mengubah jawaban setelah ini." onConfirm={() => { setConfirmState(false); submitExam(); }} onCancel={() => setConfirmState(false)} />
+
+                    {/* Left: Question Area */}
+                    <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full h-full p-4 relative">
+                        {/* Header Info */}
+                        <div className="bg-white rounded-lg shadow px-6 py-4 flex justify-between items-center mb-4">
+                            <div>
+                                <h2 className="font-bold text-gray-800">{SUBJECT}</h2>
+                                <p className="text-sm text-gray-500">{userData.name} | Kelas: {userData.classStr}</p>
+                            </div>
+                            <div className="flex items-center space-x-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-mono font-bold text-xl border border-blue-200">
+                                <span>{formatTime(timeLeft)}</span>
+                            </div>
+                        </div>
+
+                        {/* Question Box */}
+                        <div className="bg-white rounded-lg shadow p-6 flex-1 overflow-y-auto hide-scrollbar mb-4">
+                            <div className="flex space-x-4 mb-6">
+                                <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-lg font-bold text-lg shrink-0">
+                                    {currentIndex + 1}
+                                </div>
+                                <div className="text-lg text-gray-800 leading-relaxed font-medium pt-1">
+                                    {currentQ.text}
+                                    {currentQ.image && (
+                                        <img src={currentQ.image} alt="Soal" className="mt-4 max-w-full rounded border shadow-sm" />
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="pl-14 space-y-3">
+                                {/* Type: Multiple Choice */}
+                                {currentQ.type === 'mc' && currentQ.options.map((opt, i) => (
+                                    <label key={i} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${answers[currentQ.id] === opt.t ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50 border-gray-200'}`}>
+                                        <input type="radio" name={`q_${currentQ.id}`} checked={answers[currentQ.id] === opt.t} onChange={() => handleAnswerChange(currentQ.id, 'mc', opt.t)} className="w-5 h-5 text-blue-600 focus:ring-blue-500 mr-3" />
+                                        <span className="text-gray-700">{opt.t}</span>
+                                    </label>
+                                ))}
+
+                                {/* Type: Multiple Select (Kompleks) */}
+                                {currentQ.type === 'ms' && currentQ.options.map((opt, i) => {
+                                    const isChecked = (answers[currentQ.id] || []).includes(opt.t);
+                                    return (
+                                        <label key={i} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${isChecked ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50 border-gray-200'}`}>
+                                            <input type="checkbox" checked={isChecked} onChange={() => handleAnswerChange(currentQ.id, 'ms', opt.t)} className="w-5 h-5 text-blue-600 focus:ring-blue-500 rounded mr-3" />
+                                            <span className="text-gray-700">{opt.t}</span>
+                                        </label>
+                                    );
+                                })}
+
+                                {/* Type: TF Table */}
+                                {currentQ.type === 'tf_table' && (
+                                    <div className="overflow-x-auto border rounded-lg">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-gray-100 text-gray-700 border-b">
+                                                    <th className="p-3">Pernyataan</th>
+                                                    <th className="p-3 text-center w-24">Benar</th>
+                                                    <th className="p-3 text-center w-24">Salah</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {currentQ.statements.map((stmt, i) => (
+                                                    <tr key={i} className="border-b hover:bg-gray-50">
+                                                        <td className="p-3 text-gray-700 text-sm">{stmt.t}</td>
+                                                        <td className="p-3 text-center border-l">
+                                                            <input type="radio" name={`q_${currentQ.id}_${stmt.id}`} checked={(answers[currentQ.id] || {})[stmt.id] === 'Benar'} onChange={() => handleAnswerChange(currentQ.id, 'tf_table', 'Benar', stmt.id)} className="w-5 h-5 text-green-500 focus:ring-green-500 cursor-pointer" />
+                                                        </td>
+                                                        <td className="p-3 text-center border-l">
+                                                            <input type="radio" name={`q_${currentQ.id}_${stmt.id}`} checked={(answers[currentQ.id] || {})[stmt.id] === 'Salah'} onChange={() => handleAnswerChange(currentQ.id, 'tf_table', 'Salah', stmt.id)} className="w-5 h-5 text-red-500 focus:ring-red-500 cursor-pointer" />
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Navigation Footer */}
+                        <div className="bg-white rounded-lg shadow px-6 py-4 flex justify-between items-center">
+                            <button onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))} disabled={currentIndex === 0} className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 font-medium hover:bg-gray-300 transition">
+                                &laquo; Sebelumnya
+                            </button>
+                            
+                            {currentIndex === questions.length - 1 ? (
+                                <button onClick={() => setConfirmState(true)} className="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow shadow-green-200 transition">
+                                    Selesai & Kumpul
+                                </button>
+                            ) : (
+                                <button onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))} className="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow shadow-blue-200 transition">
+                                    Selanjutnya &raquo;
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right: Grid Area */}
+                    <div className="w-80 bg-white border-l shadow-lg flex flex-col z-10 hidden md:flex">
+                        <div className="p-4 border-b bg-gray-50">
+                            <h3 className="font-bold text-gray-800 text-center">Navigasi Soal</h3>
+                        </div>
+                        <div className="p-4 flex-1 overflow-y-auto">
+                            <div className="grid grid-cols-5 gap-2">
+                                {questions.map((q, idx) => {
+                                    const answered = hasAnswered(q.id);
+                                    const isActive = idx === currentIndex;
+                                    let btnClass = "w-10 h-10 rounded font-medium flex items-center justify-center transition border ";
+                                    
+                                    if (isActive) btnClass += "ring-2 ring-offset-2 ring-blue-500 ";
+                                    if (answered) btnClass += "bg-blue-600 text-white border-blue-600 ";
+                                    else btnClass += "bg-white text-gray-600 hover:bg-gray-100 border-gray-300";
+
+                                    return (
+                                        <button key={idx} onClick={() => setCurrentIndex(idx)} className={btnClass}>
+                                            {idx + 1}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className="p-4 border-t bg-gray-50 space-y-2 text-sm text-gray-600">
+                            <div className="flex items-center space-x-2"><div className="w-4 h-4 bg-blue-600 rounded"></div><span>Sudah Dijawab</span></div>
+                            <div className="flex items-center space-x-2"><div className="w-4 h-4 bg-white border border-gray-300 rounded"></div><span>Belum Dijawab</span></div>
+                            <div className="flex items-center space-x-2"><div className="w-4 h-4 ring-2 ring-blue-500 rounded"></div><span>Posisi Saat Ini</span></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Inisialisasi ikon Lucide
+        setTimeout(() => lucide.createIcons(), 1000);
+    </script>
+</body>
+</html>
